@@ -1,10 +1,11 @@
+from flask import Flask, render_template, Response
+import cv2
 import sys
-
 sys.path.append('/path/to/ffmpeg')
 import mediapipe as mp
-import cv2
 import numpy as np
-import sys
+
+app = Flask(__name__)
 
 
 def findAngle(a, b, c, minVis=0.8):
@@ -26,6 +27,7 @@ def findAngle(a, b, c, minVis=0.8):
     else:
         return -1
 
+
 def legState(angle):
     if angle < 0:
         return 0  # Joint is not being picked up
@@ -36,22 +38,13 @@ def legState(angle):
     else:
         return 3  # Upright range
 
-if __name__ == "__main__":
-    # Init mediapipe drawing and pose
+
+def gen_frames():
     mp_drawing = mp.solutions.drawing_utils
     mp_pose = mp.solutions.pose
-
-    # Init Video Feed
-    # Opens file if passed as parameter from terminal
-    # Else Defaults to webcam
-
-    # cap = cv2.VideoCapture("/home/annamma/notebook/jupyterenv/py/projects/squat-counter/squat.mp4")
-    cap = None
-    # if len(sys.argv) > 1:
-        # cap = cv2.VideoCapture(str(sys.argv[1]))
+    
     cap = cv2.VideoCapture(0)
-    # else:
-    #     cap = cv2.VideoCapture("/home/annamma/notebook/jupyterenv/py/projects/squat-counter/video.mp4")
+
     while cap.read()[1] is None:
         print("Waiting for Video")
 
@@ -145,7 +138,20 @@ if __name__ == "__main__":
                                 print("GOOD!")
                                 repCount += 1
                 print("Squats: " + (str)(repCount))
-
-                cv2.imshow("Squat Rep Counter", frame)
+                ret, buffer = cv2.imencode('.jpg', frame)
+                frame = buffer.tobytes()
+                yield (b'--frame\r\n'
+                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
                 if cv2.waitKey(1) & 0xFF == 27:
                     break
+
+@app.route('/')
+def index():
+    return render_template('./index.html')
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+if __name__ == '__main__':
+    app.run(debug=True)
