@@ -46,9 +46,8 @@ Your suggestions depend on the remaining time the user has to wait for their veh
 	const openai = new OpenAI({
 		dangerouslyAllowBrowser: true,
 		organization: 'org-0Whneo6JCGdygEiMyatZwTAg',
-		project: 'thesis',
-		apiKey:
-			'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'
+		project: 'proj_E9jqYupNUF7w3eJkXJy6JkOQ',
+		apiKey: ''
 	});
 
 	async function ask(msgs) {
@@ -56,7 +55,8 @@ Your suggestions depend on the remaining time the user has to wait for their veh
 			messages: msgs,
 			model: 'gpt-4o'
 		});
-		messages = [...messages, completion.choices[0]];
+		console.log(completion);
+		messages = [...messages, completion.choices[0].message];
 	}
 
 	let chatContent = '';
@@ -120,7 +120,7 @@ Your suggestions depend on the remaining time the user has to wait for their veh
 													class:bg-gray-200={message.role === 'user'}
 													class:bg-blue-200={message.role === 'assistant'}
 												>
-													{message.text}
+													{message.content}
 												</div>
 											</div>
 										{/each}
